@@ -1,5 +1,5 @@
-
 import './style.css'
+import { loginForm } from './login.js'
 
 type Fruit = {
   name: string;
@@ -70,7 +70,10 @@ function renderShop() {
   const totalPages = getTotalPages();
   
   app.innerHTML = `
-    <h1>Fruit Shop</h1>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h1 style="margin: 0;">Fruit Shop</h1>
+      <button class="login-btn" id="login-btn">Sign In</button>
+    </div>
     <div class="pagination-info">
       Page ${currentPage + 1} of ${totalPages} (${fruits.length} fruits total)
     </div>
@@ -147,6 +150,14 @@ function renderShop() {
     lastBtn.onclick = () => {
       currentPage = totalPages - 1;
       renderShop();
+    };
+  }
+
+  // Add login button event listener
+  const loginBtn = document.getElementById('login-btn');
+  if (loginBtn) {
+    loginBtn.onclick = () => {
+      loginForm.show();
     };
   }
 
