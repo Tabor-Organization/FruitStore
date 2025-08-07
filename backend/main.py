@@ -1,9 +1,12 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import List
+from pydantic import BaseModel, EmailStr
+from typing import List, Optional
 from pymongo import MongoClient
 from bson import ObjectId
 import os
+import hashlib
+import re
+from datetime import datetime
 
 app = FastAPI()
 
@@ -13,6 +16,7 @@ client = MongoClient(MONGO_URL)
 db = client["fruitstore"]
 fruits_collection = db["fruits"]
 orders_collection = db["orders"]
+users_collection = db["users"]
 
 class Fruit(BaseModel):
     name: str
@@ -32,6 +36,27 @@ class Order(BaseModel):
 
 class OrderInDB(Order):
     id: str
+
+class UserRegistration(BaseModel):
+    email: EmailStr
+    password: str
+    confirm_password: str
+
+class User(BaseModel):
+    email: EmailStr
+    password_hash: str
+    created_at: datetime
+    is_verified: bool = False
+
+class UserInDB(BaseModel):
+    id: str
+    email: str
+    created_at: datetime
+    is_verified: bool
+
+class UserResponse(BaseModel):
+    message: str
+    user: Optional[UserInDB] = None
 
 @app.get("/fruits", response_model=List[FruitInDB])
 def get_fruits():
@@ -71,3 +96,70 @@ def get_orders():
     for order in orders_collection.find():
         orders.append(OrderInDB(id=str(order["_id"]), items=order["items"], total=order["total"]))
     return orders
+
+def hash_password(password: str) -> str:
+    """Hash password using SHA-256"""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def validate_password_strength(password: str) -> tuple[bool, str]:
+    """Validate password strength"""
+    if len(password) < 8:
+        return False, "Password must be at least 8 characters long"
+    
+    if not re.search(r"[A-Z]", password):
+        return False, "Password must contain at least one uppercase letter"
+    
+    if not re.search(r"[a-z]", password):
+        return False, "Password must contain at least one lowercase letter"
+    
+    if not re.search(r"\d", password):
+        return False, "Password must contain at least one number"
+    
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        return False, "Password must contain at least one special character"
+    
+    return True, "Password is strong"
+
+@app.post("/register", response_model=UserResponse)
+def register_user(user_data: UserRegistration):
+    # Check if passwords match
+    if user_data.password != user_data.confirm_password:
+        raise HTTPException(status_code=400, detail="Passwords do not match")
+    
+    # Validate password strength
+    is_strong, message = validate_password_strength(user_data.password)
+    if not is_strong:
+        raise HTTPException(status_code=400, detail=message)
+    
+    # Check if user already exists
+    existing_user = users_collection.find_one({"email": user_data.email})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Create new user
+    user = User(
+        email=user_data.email,
+        password_hash=hash_password(user_data.password),
+        created_at=datetime.utcnow(),
+        is_verified=False
+    )
+    
+    result = users_collection.insert_one(user.dict())
+    
+    user_in_db = UserInDB(
+        id=str(result.inserted_id),
+        email=user.email,
+        created_at=user.created_at,
+        is_verified=user.is_verified
+    )
+    
+    return UserResponse(
+        message="User registered successfully",
+        user=user_in_db
+    )
+
+@app.get("/users/{email}")
+def check_email_exists(email: str):
+    """Check if email already exists"""
+    user = users_collection.find_one({"email": email})
+    return {"exists": user is not None}
