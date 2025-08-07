@@ -1,5 +1,5 @@
-
 import './style.css'
+import { renderRegistrationForm, setupRegistrationForm } from './registration'
 
 type Fruit = {
   name: string;
@@ -31,6 +31,10 @@ const basket: Basket = {};
 // Pagination state
 const ITEMS_PER_PAGE = 9;
 let currentPage = 0;
+
+// App state
+type AppView = 'shop' | 'register';
+let currentView: AppView = 'shop';
 
 // Get fruit emoji/icon for display
 function getFruitIcon(fruitName: string): string {
@@ -64,12 +68,33 @@ function getTotalPages() {
   return Math.ceil(fruits.length / ITEMS_PER_PAGE);
 }
 
-function renderShop() {
+function renderApp() {
   const app = document.querySelector<HTMLDivElement>('#app')!;
+  
+  // Render navigation
+  const navHtml = `
+    <div class="nav-container">
+      <button class="nav-btn ${currentView === 'shop' ? 'active' : ''}" id="shop-nav">🛒 Shop</button>
+      <button class="nav-btn ${currentView === 'register' ? 'active' : ''}" id="register-nav">👤 Register</button>
+    </div>
+  `;
+  
+  if (currentView === 'shop') {
+    renderShop(app, navHtml);
+  } else if (currentView === 'register') {
+    renderRegistration(app, navHtml);
+  }
+  
+  // Setup navigation event listeners
+  setupNavigation();
+}
+
+function renderShop(app: HTMLDivElement, navHtml: string) {
   const paginatedFruits = getPaginatedFruits();
   const totalPages = getTotalPages();
   
   app.innerHTML = `
+    ${navHtml}
     <h1>Fruit Shop</h1>
     <div class="pagination-info">
       Page ${currentPage + 1} of ${totalPages} (${fruits.length} fruits total)
@@ -121,7 +146,7 @@ function renderShop() {
   if (firstBtn) {
     firstBtn.onclick = () => {
       currentPage = 0;
-      renderShop();
+      renderApp();
     };
   }
 
@@ -129,7 +154,7 @@ function renderShop() {
     prevBtn.onclick = () => {
       if (currentPage > 0) {
         currentPage--;
-        renderShop();
+        renderApp();
       }
     };
   }
@@ -138,7 +163,7 @@ function renderShop() {
     nextBtn.onclick = () => {
       if (currentPage < totalPages - 1) {
         currentPage++;
-        renderShop();
+        renderApp();
       }
     };
   }
@@ -146,7 +171,7 @@ function renderShop() {
   if (lastBtn) {
     lastBtn.onclick = () => {
       currentPage = totalPages - 1;
-      renderShop();
+      renderApp();
     };
   }
 
@@ -176,4 +201,33 @@ function renderBasket() {
   `;
 }
 
-renderShop();
+function renderRegistration(app: HTMLDivElement, navHtml: string) {
+  app.innerHTML = `
+    ${navHtml}
+    ${renderRegistrationForm()}
+  `;
+  
+  // Setup registration form after rendering
+  setupRegistrationForm();
+}
+
+function setupNavigation() {
+  const shopNav = document.getElementById('shop-nav');
+  const registerNav = document.getElementById('register-nav');
+  
+  if (shopNav) {
+    shopNav.onclick = () => {
+      currentView = 'shop';
+      renderApp();
+    };
+  }
+  
+  if (registerNav) {
+    registerNav.onclick = () => {
+      currentView = 'register';
+      renderApp();
+    };
+  }
+}
+
+renderApp();
