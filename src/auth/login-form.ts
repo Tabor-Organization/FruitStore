@@ -16,10 +16,10 @@ export interface LoginFormState {
   isVisible: boolean;
 }
 
-// Demo credentials - UPDATE THESE FROM SLACK #context CHANNEL
+// Demo credentials - UPDATED FROM SLACK #context CHANNEL
 const DEMO_CREDENTIALS = {
-  email: 'demo@fruitstore.com',
-  password: 'fruitstore123',
+  email: 'DemoEmail@avanade.com',
+  password: 'demoPassword123!',
   // Alternative credentials for testing different scenarios
   admin: {
     email: 'admin@fruitstore.com',
