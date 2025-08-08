@@ -1,5 +1,6 @@
-
 import './style.css'
+import './auth/login-styles.css'
+import { loginForm } from './auth/login-form.js'
 
 type Fruit = {
   name: string;
@@ -70,7 +71,10 @@ function renderShop() {
   const totalPages = getTotalPages();
   
   app.innerHTML = `
-    <h1>Fruit Shop</h1>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+      <h1 style="margin: 0; flex: 1; min-width: 200px;">🍎 Fruit Shop</h1>
+      <button class="login-btn" id="login-btn">🔐 Sign In</button>
+    </div>
     <div class="pagination-info">
       Page ${currentPage + 1} of ${totalPages} (${fruits.length} fruits total)
     </div>
@@ -147,6 +151,14 @@ function renderShop() {
     lastBtn.onclick = () => {
       currentPage = totalPages - 1;
       renderShop();
+    };
+  }
+
+  // Add login button event listener
+  const loginBtn = document.getElementById('login-btn');
+  if (loginBtn) {
+    loginBtn.onclick = () => {
+      loginForm.show();
     };
   }
 
