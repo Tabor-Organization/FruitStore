@@ -1,50 +1,49 @@
-# Fruit Store Webapp
+# CLAUDE.md
 
-This project is a simple web application for buying fruits (apples, bananas, oranges, grapes).
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Tech Stack
-- **Frontend:** Vite + TypeScript (SPA)
-- **Backend:** FastAPI (Python)
-- **Database:** MongoDB
+## Project Architecture
 
-## Features
-- View available fruits
-- Add fruits to cart
-- Place orders
-- CRUD operations for fruits and orders
+This is a full-stack Fruit Store webapp with a clear separation between frontend and backend:
 
-## Getting Started
+- **Frontend**: Vite + TypeScript SPA with pagination, basket functionality, and emoji-based fruit display (src/main.ts)
+- **Backend**: FastAPI + MongoDB with CRUD operations for fruits and orders (backend/main.py)
+- **Database**: MongoDB with collections for fruits and orders
 
-### Frontend
-1. Install dependencies:
-   ```powershell
-   npm install
-   ```
-2. Start the development server:
-   ```powershell
-   npm run dev
-   ```
+## Development Commands
 
-### Backend
-1. Navigate to the `backend` folder:
-   ```powershell
-   cd backend
-   ```
-2. Create a virtual environment and activate it:
-   ```powershell
-   python -m venv venv
-   .\venv\Scripts\activate
-   ```
-3. Install dependencies:
-   ```powershell
-   pip install -r requirements.txt
-   ```
-4. Start the FastAPI server:
-   ```powershell
-   uvicorn main:app --reload
-   ```
+### Frontend (root directory)
+- **Start dev server**: `npm run dev` - Runs Vite development server
+- **Build**: `npm run build` - TypeScript compilation + Vite build
+- **Preview**: `npm run preview` - Preview production build
+- **Install deps**: `npm install`
 
-### MongoDB
-- Make sure MongoDB is running locally or update the connection string in `backend/main.py`.
+### Backend (backend/ directory)
+- **Setup virtual env**: `python -m venv venv` then `.\venv\Scripts\activate` (Windows)
+- **Install deps**: `pip install -r requirements.txt` (or `pip install fastapi uvicorn pymongo`)
+- **Start server**: `uvicorn main:app --reload` - Runs FastAPI development server
+- **MongoDB**: Ensure MongoDB is running locally or update MONGO_URL env var in main.py
 
----
+## Key Implementation Details
+
+### Frontend State Management
+- Uses vanilla TypeScript with a global `basket` object for cart state
+- Pagination implemented with `currentPage` state and 9 items per page
+- Fruit data is hardcoded in main.ts with emoji mapping
+
+### Backend API Structure
+- FastAPI with Pydantic models: `Fruit`, `FruitInDB`, `Order`, `OrderItem`, `OrderInDB`
+- MongoDB collections: `fruits` and `orders`
+- CRUD endpoints: `/fruits` (GET, POST, PUT, DELETE) and `/orders` (GET, POST)
+- ObjectId handling for MongoDB document IDs
+
+### Database Connection
+- MongoDB URL configurable via MONGO_URL environment variable
+- Default: `mongodb://localhost:27017/`
+- Database name: `fruitstore`
+
+## Tech Stack Guidelines
+- Follow Vite + TypeScript patterns for frontend development
+- Use FastAPI + Pydantic for backend API development
+- MongoDB with pymongo for database operations
+- Maintain separation between frontend and backend codebases
