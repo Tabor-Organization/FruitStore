@@ -1,0 +1,127 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop, smallTeamSampleProject ]
+
+jobs:
+  test-frontend:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install frontend dependencies
+      run: npm ci
+    
+    - name: Run TypeScript checks
+      run: npx tsc --noEmit
+    
+    - name: Build frontend
+      run: npm run build
+    
+    - name: Upload frontend build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-build
+        path: dist/
+
+  test-backend:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+    
+    - name: Install backend dependencies
+      run: |
+        cd backend
+        pip install -r requirements.txt
+        pip install pytest pytest-cov flake8
+    
+    - name: Run linting
+      run: |
+        cd backend
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    
+    - name: Run backend tests
+      run: |
+        cd backend
+        pytest --cov=. --cov-report=xml --cov-report=term-missing
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./backend/coverage.xml
+        flags: backend
+
+  deploy-staging:
+    needs: [test-frontend, test-backend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download frontend build
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-build
+        path: dist/
+    
+    - name: Deploy to staging
+      run: |
+        echo "Deploying to staging environment..."
+        # Add staging deployment commands here
+        echo "Frontend and backend deployed to staging"
+
+  deploy-production:
+    needs: [test-frontend, test-backend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download frontend build
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-build
+        path: dist/
+    
+    - name: Deploy to production
+      run: |
+        echo "Deploying to production environment..."
+        # Add production deployment commands here
+        echo "Frontend and backend deployed to production"
+    
+    - name: Create deployment notification
+      run: |
+        echo "Production deployment completed successfully"
+        # Add notification logic here (Slack, email, etc.)
+
+  rollback:
+    runs-on: ubuntu-latest
+    if: failure() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    needs: [deploy-staging, deploy-production]
+    
+    steps:
+    - name: Rollback deployment
+      run: |
+        echo "Deployment failed - initiating rollback..."
+        # Add rollback commands here
+        echo "Rollback completed"

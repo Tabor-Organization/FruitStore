@@ -1,0 +1,39 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    types:
+      - completed
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies and build
+      run: |
+        npm ci
+        npm run build
+    
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./dist
+        cname: fruitstore.example.com  # Replace with your domain if you have one
+    
+    - name: Deployment Status
+      run: |
+        echo "✅ Deployment to GitHub Pages completed successfully!"
+        echo "🌐 Site will be available at: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
