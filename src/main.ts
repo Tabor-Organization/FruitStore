@@ -1,5 +1,5 @@
-
 import './style.css'
+import { ChatBot } from './chatbot';
 
 type Fruit = {
   name: string;
@@ -176,4 +176,20 @@ function renderBasket() {
   `;
 }
 
+// Initialize the shop
 renderShop();
+
+// Initialize chatbot
+document.addEventListener('DOMContentLoaded', () => {
+  // Create a container for the chatbot if it doesn't exist
+  let chatbotContainer = document.getElementById('chatbot-container');
+  if (!chatbotContainer) {
+    chatbotContainer = document.createElement('div');
+    chatbotContainer.id = 'chatbot-container';
+    document.body.appendChild(chatbotContainer);
+  }
+  
+  // Initialize the chatbot
+  new ChatBot('chatbot-container');
+});
+
